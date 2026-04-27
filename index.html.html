@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Hytte varmestyring</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f3ef; color: #1a1a18;
+      min-height: 100vh; padding: 1.5rem 1rem 3rem;
+    }
+    .app { max-width: 480px; margin: 0 auto; }
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+    .cabin-icon { width: 40px; height: 40px; background: #dbeafe; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .subtitle { font-size: 13px; color: #6b6b67; margin-top: 2px; }
+    .card { background: #fff; border-radius: 14px; border: 0.5px solid #e0dfd7; padding: 1.25rem; margin-bottom: 1rem; }
+    .section-label { font-size: 11px; font-weight: 600; color: #8a8a85; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+    .status-bar { margin-top: 0.75rem; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
+    .status-bar.info { background: #eff6ff; color: #1d4ed8; }
+    .status-bar.success { background: #f0fdf4; color: #166534; }
+    .status-bar.error { background: #fef2f2; color: #991b1b; }
+    .kalender-kort { border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem; }
+    .kalender-kort.aktiv { background: #f0fdf4; border: 1.5px solid #86efac; }
+    .kalender-kort.inaktiv { background: #fafaf8; border: 1.5px solid #e0dfd7; }
+    .kalender-kort.laster { background: #fafaf8; border: 1.5px solid #e0dfd7; }
+    .kalender-header { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
+    .kalender-ikon { font-size: 22px; }
+    .kalender-tittel { font-size: 15px; font-weight: 600; }
+    .kalender-sub { font-size: 13px; color: #6b6b67; margin-top: 2px; }
+    .hendelse-boks { background: #dcfce7; border: 1px solid #86efac; border-radius: 10px; padding: 0.75rem 1rem; margin-top: 0.5rem; }
+    .hendelse-tittel { font-size: 14px; font-weight: 600; color: #166534; }
+    .hendelse-tid { font-size: 13px; color: #16a34a; margin-top: 3px; }
+    .sist-sjekket { font-size: 12px; color: #9a9a95; margin-top: 0.75rem; }
+    .top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .refresh-btn { font-size: 13px; color: #6b6b67; background: none; border: 1px solid #d4d3cb; border-radius: 8px; padding: 5px 12px; cursor: pointer; }
+    .all-btns { display: flex; gap: 8px; margin-bottom: 1rem; }
+    .btn-sec { flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border-radius: 8px; border: 1px solid #d4d3cb; background: #fafaf8; color: #1a1a18; cursor: pointer; }
+    .btn-sec:active { background: #f0efeb; }
+    .divider { border: none; border-top: 1px solid #e8e7e0; margin: 0.75rem 0; }
+    .room-card { background: #fafaf8; border: 1px solid #e8e7e0; border-radius: 12px; padding: 1rem; margin-bottom: 10px; }
+    .room-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .room-name { font-size: 16px; font-weight: 600; }
+    .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+    .badge { font-size: 12px; padding: 3px 9px; border-radius: 999px; font-weight: 500; }
+    .badge-now { background: #f1f0eb; color: #6b6b67; border: 1px solid #e0dfd7; }
+    .badge-target { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .badge-off { background: #f1f0eb; color: #9a9a95; border: 1px solid #e0dfd7; }
+    .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+    .toggle { position: relative; width: 46px; height: 26px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .knob { position: absolute; inset: 0; background: #d1d5db; border-radius: 999px; cursor: pointer; transition: background 0.2s; }
+    .knob:before { content: ''; position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .toggle input:checked + .knob { background: #16a34a; }
+    .toggle input:checked + .knob:before { transform: translateX(20px); }
+    .toggle input:disabled + .knob { opacity: 0.5; cursor: not-allowed; }
+    .toggle-label { font-size: 14px; color: #6b6b67; min-width: 24px; }
+    .temp-row { display: flex; align-items: center; gap: 8px; }
+    .temp-row input[type="number"] { width: 64px; text-align: center; padding: 8px; border-radius: 8px; border: 1px solid #d4d3cb; font-size: 15px; background: #fafaf8; color: #1a1a18; outline: none; -webkit-appearance: none; }
+    .temp-row span { font-size: 14px; color: #6b6b67; }
+    .btn-set { padding: 8px 14px; font-size: 14px; font-weight: 500; border-radius: 8px; border: 1px solid #d4d3cb; background: #fff; color: #1a1a18; cursor: pointer; }
+    .btn-set:disabled { opacity: 0.4; cursor: not-allowed; }
+    .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 4px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty { text-align: center; padding: 2rem; color: #9a9a95; font-size: 14px; }
+    .connecting { text-align: center; padding: 2rem; color: #6b6b67; font-size: 14px; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="cabin-icon">🏠</div>
+    <div>
+      <h1>Hytte varmestyring</h1>
+      <div class="subtitle">Adax WiFi — styr hyttens varmere</div>
+    </div>
+  </div>
+
+  <div id="kalender-status" class="kalender-kort laster">
+    <div class="kalender-header">
+      <span class="kalender-ikon">📅</span>
+      <div>
+        <div class="kalender-tittel">Henter kalenderstatus...</div>
+        <div class="kalender-sub">Sjekker om du har hyttetur på vei</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="rooms-section">
+    <div class="card">
+      <div class="top-row">
+        <div class="section-label" style="margin:0;">Dine rom</div>
+        <button class="refresh-btn" onclick="loadRooms()">↻ Oppdater</button>
+      </div>
+      <div class="all-btns">
+        <button class="btn-sec" id="all-on" onclick="setAll(true)">Slå på alle (20°C)</button>
+        <button class="btn-sec" id="all-off" onclick="setAll(false)">Slå av alle</button>
+      </div>
+      <div class="divider"></div>
+      <div id="rooms-list"><div class="connecting"><span class="spinner"></span>Kobler til...</div></div>
+    </div>
+  </div>
+
+</div>
+<script>
+  const API = 'https://adax-proxy.hanouren.workers.dev';
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdMuxZHjkymFzNH5cRbFyDn_wAUYp94pXgSz-7C-bkA_AY6jqeVNcZvJ2JmoTCiZua/exec';
+  const CLIENT_ID = '282868';
+  const CLIENT_SECRET = '8aVUVB78uZFC2tid';
+
+  let token = null;
+  let rooms = [];
+  let pending = new Set();
+
+  async function hentKalenderStatus() {
+    try {
+      const r = await fetch(SCRIPT_URL + '?t=' + Date.now());
+      if (!r.ok) throw new Error();
+      const data = await r.json();
+      const el = document.getElementById('kalender-status');
+      const sistSjekket = data.sistSjekket ? new Date(data.sistSjekket).toLocaleString('no-NO') : 'ukjent';
+      if (data.paa && data.hendelse) {
+        const ankomst = data.start ? new Date(data.start).toLocaleString('no-NO', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' }) : '';
+        el.className = 'kalender-kort aktiv';
+        el.innerHTML = `
+          <div class="kalender-header">
+            <span class="kalender-ikon">🟢</span>
+            <div>
+              <div class="kalender-tittel">Varmerne er skrudd på!</div>
+              <div class="kalender-sub">Automatisk aktivert av kalender</div>
+            </div>
+          </div>
+          <div class="hendelse-boks">
+            <div class="hendelse-tittel">📅 ${data.hendelse}</div>
+            ${ankomst ? `<div class="hendelse-tid">Ankomst: ${ankomst}</div>` : ''}
+            <div class="hendelse-tid">Temperatur satt til: ${data.temperatur}°C</div>
+          </div>
+          <div class="sist-sjekket">Sist sjekket: ${sistSjekket}</div>`;
+      } else if (data.sistSjekket) {
+        el.className = 'kalender-kort inaktiv';
+        el.innerHTML = `
+          <div class="kalender-header">
+            <span class="kalender-ikon">⚪</span>
+            <div>
+              <div class="kalender-tittel">Ingen hyttetur de neste 12 timene</div>
+              <div class="kalender-sub">Varmerne styres manuelt</div>
+            </div>
+          </div>
+          <div class="sist-sjekket">Sist sjekket: ${sistSjekket}</div>`;
+      } else {
+        el.className = 'kalender-kort inaktiv';
+        el.innerHTML = `
+          <div class="kalender-header">
+            <span class="kalender-ikon">⚪</span>
+            <div>
+              <div class="kalender-tittel">Ingen status ennå</div>
+              <div class="kalender-sub">Kjør scriptet i Google Apps Script først</div>
+            </div>
+          </div>`;
+      }
+    } catch(e) {
+      const el = document.getElementById('kalender-status');
+      el.className = 'kalender-kort inaktiv';
+      el.innerHTML = `
+        <div class="kalender-header">
+          <span class="kalender-ikon">⚠️</span>
+          <div>
+            <div class="kalender-tittel">Kunne ikke hente kalenderstatus</div>
+            <div class="kalender-sub">Sjekk at web-appen er publisert i Apps Script</div>
+          </div>
+        </div>`;
+    }
+  }
+
+  async function getToken() {
+    const body = new URLSearchParams();
+    body.append('grant_type', 'password');
+    body.append('username', CLIENT_ID);
+    body.append('password', CLIENT_SECRET);
+    const r = await fetch(API + '/auth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body
+    });
+    if (!r.ok) throw new Error('Feil konto-ID eller passord');
+    return (await r.json()).access_token;
+  }
+
+  async function loadRooms() {
+    try {
+      if (!token) token = await getToken();
+      const r = await fetch(API + '/rest/v1/content/', { headers: { Authorization: 'Bearer ' + token } });
+      if (!r.ok) throw new Error();
+      const data = await r.json();
+      rooms = data.rooms || [];
+      renderRooms();
+    } catch(e) {
+      document.getElementById('rooms-list').innerHTML = '<div class="empty">Kunne ikke laste rom — prøv å oppdatere</div>';
+    }
+  }
+
+  function renderRooms() {
+    const list = document.getElementById('rooms-list');
+    if (!rooms.length) { list.innerHTML = '<div class="empty">Ingen rom funnet.</div>'; return; }
+    list.innerHTML = rooms.map(room => {
+      const cur = room.temperature ? (room.temperature/100).toFixed(1) : null;
+      const tgt = room.targetTemperature ? (room.targetTemperature/100).toFixed(0) : null;
+      const on = room.targetTemperature && room.targetTemperature > 500;
+      const busy = pending.has(room.id);
+      return `<div class="room-card">
+        <div class="room-header">
+          <span class="room-name">${room.name || 'Rom ' + room.id}</span>
+          <div class="badges">
+            ${cur ? `<span class="badge badge-now">${cur}°C nå</span>` : ''}
+            ${on ? `<span class="badge badge-target">→ ${tgt}°C</span>` : '<span class="badge badge-off">Av</span>'}
+          </div>
+        </div>
+        <div class="controls">
+          <div class="toggle-wrap">
+            <label class="toggle">
+              <input type="checkbox" ${on?'checked':''} ${busy?'disabled':''} onchange="toggleRoom(${room.id},this.checked)">
+              <span class="knob"></span>
+            </label>
+            <span class="toggle-label">${on?'På':'Av'}</span>
+          </div>
+          ${on ? `<div class="temp-row">
+            <input type="number" id="t${room.id}" value="${tgt||20}" min="5" max="35" step="1">
+            <span>°C</span>
+            <button class="btn-set" ${busy?'disabled':''} onclick="setTemp(${room.id})">Sett</button>
+          </div>` : ''}
+          ${busy ? `<span style="font-size:13px;color:#6b6b67;"><span class="spinner"></span>Oppdaterer...</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function setRoomTemp(roomId, temp) {
+    pending.add(roomId); renderRooms();
+    try {
+      await fetch(API + '/rest/v1/control/', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rooms: [{ id: roomId, targetTemperature: Math.round(temp * 100) }] })
+      });
+      await loadRooms();
+    } catch(e) { console.error(e); }
+    pending.delete(roomId); renderRooms();
+  }
+
+  function toggleRoom(id, on) {
+    const inp = document.getElementById('t' + id);
+    setRoomTemp(id, on ? (inp ? parseFloat(inp.value)||20 : 20) : 5);
+  }
+
+  function setTemp(id) {
+    const v = parseFloat(document.getElementById('t'+id).value);
+    if (!v || v < 5 || v > 35) { alert('Temperatur må være 5–35°C'); return; }
+    setRoomTemp(id, v);
+  }
+
+  async function setAll(on) {
+    document.getElementById('all-on').disabled = true;
+    document.getElementById('all-off').disabled = true;
+    for (const r of rooms) await setRoomTemp(r.id, on ? 20 : 5);
+    document.getElementById('all-on').disabled = false;
+    document.getElementById('all-off').disabled = false;
+  }
+
+  hentKalenderStatus();
+  setInterval(hentKalenderStatus, 5 * 60 * 1000);
+  loadRooms();
+</script>
+</body>
+</html>
